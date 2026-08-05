@@ -222,3 +222,4 @@ __marimo__/
 __pycache__/
 *.pyc
 *.log
+chat_history.json
