@@ -69,14 +69,25 @@ agent= CodeAgent(
 )
 
 # 4.测试提问
+# if __name__ == "__main__":
+#     test_question = [
+#         "现在几点了？",
+#         "今天是几号？",
+#         "今天是星期几？",
+#         # "abcdfdf情书一下这段话有多少字？"
+#     ]
+#     for question in test_question:
+#         print("用户提问:", question)
+#         response = agent.run(question)
+#         print("AI回答:", response)
+
+#5.持续聊天，多轮记忆
 if __name__ == "__main__":
-    test_question = [
-        "现在几点了？",
-        "今天是几号？",
-        "今天是星期几？",
-        # "abcdfdf情书一下这段话有多少字？"
-    ]
-    for question in test_question:
-        print("用户提问:", question)
-        response = agent.run(question)
+    print("欢迎使用智能问答系统，输入 'exit' 退出")
+    while True:
+        user_input = input("用户提问: ")
+        if user_input.lower() == "exit":
+            print("本次对话结束，再见！")
+            break
+        response = agent.run(user_input)
         print("AI回答:", response)
