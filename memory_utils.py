@@ -5,13 +5,16 @@ import os
 HISTORY_PATH = r"D:\develop\agent-learing\agent-learning-daily-log\chat_history.json"
 
 def load_chat_history():
-    """加载全部历史对话列表，返回list"""
-    if not os.path.exists(HISTORY_PATH):
-        # 文件不存在就返回空对话列表
+    import json
+    HISTORY_PATH = "chat_history.json"
+    try:
+        with open(HISTORY_PATH, "r", encoding="utf-8") as f:
+            full_history = json.load(f)
+    except:
         return []
-    with open(HISTORY_PATH, "r", encoding="utf-8") as f:
-        history = json.load(f)
-    return history
+    # 滑动窗口核心：只取最后10条（5轮对话）
+    short_history = full_history[-10:] if len(full_history) > 10 else full_history
+    return short_history
 
 def append_chat_message(role: str, content: str):
     """
