@@ -1,8 +1,9 @@
 # tool_router.py
-# 功能：统一工具注册、关键词匹配、批量调用路由模块
+# 功能：统一工具注册、关键词匹配、批量调用路由模块（仅处理时间工具）
 from datetime import datetime
+from rag_utils import search_knowledge
 
-# ---------------------- 定义所有工具函数 ----------------------
+# ---------------------- 定义所有时间工具函数 ----------------------
 def get_now_time() -> str:
     """获取当前时分秒"""
     now = datetime.now()
@@ -19,7 +20,7 @@ def get_today_week() -> str:
     week_idx = datetime.now().weekday()
     return week_map[week_idx]
 
-# ---------------------- 工具注册表：关键词映射工具 ----------------------
+# ---------------------- 工具注册表：仅时间类工具 ----------------------
 tool_registry = [
     {
         "keywords": ["几点","当前时间","现在时间"],
@@ -38,9 +39,8 @@ tool_registry = [
     }
 ]
 
-# ---------------------- 批量匹配工具 ----------------------
-def match_all_tools(user_input: str) -> list:
-    """根据用户输入，匹配所有命中关键词的工具"""
+# ---------------------- 匹配时间工具 ----------------------
+def match_time_tools(user_input: str) -> list:
     hit_tools = []
     lower_text = user_input.lower()
     for tool_item in tool_registry:
@@ -50,13 +50,15 @@ def match_all_tools(user_input: str) -> list:
                 break
     return hit_tools
 
-# ---------------------- 批量执行工具，汇总结果 ----------------------
-def run_all_matched_tools(user_input: str) -> str:
-    """匹配并执行全部工具，拼接简洁结果文本"""
-    hit_funcs = match_all_tools(user_input)
+# ---------------------- 仅执行时间工具，返回时间信息 ----------------------
+def run_time_tools(user_input: str) -> str:
+    hit_funcs = match_time_tools(user_input)
     if not hit_funcs:
-        return ""
+        return "无时间相关信息"
     res_list = []
     for fn in hit_funcs:
         res_list.append(fn())
-    return " ".join(res_list)
+    return "、".join(res_list)
+
+# 导出对外可用函数
+__all__ = ["run_time_tools", "search_knowledge"]
