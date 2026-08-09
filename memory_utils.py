@@ -5,16 +5,12 @@ import os
 HISTORY_PATH = r"D:\develop\agent-learing\agent-learning-daily-log\chat_history.json"
 
 def load_chat_history():
-    import json
-    HISTORY_PATH = "chat_history.json"
     try:
         with open(HISTORY_PATH, "r", encoding="utf-8") as f:
             full_history = json.load(f)
     except:
         return []
-    # 滑动窗口核心：只取最后10条（5轮对话）
-    short_history = full_history[-10:] if len(full_history) > 10 else full_history
-    return short_history
+    return full_history
 
 def append_chat_message(role: str, content: str):
     """
@@ -34,3 +30,19 @@ def append_chat_message(role: str, content: str):
 def get_history_count():
     """获取历史对话总条数，方便启动打印"""
     return len(load_chat_history())
+
+def slide_window_history(max_turn: int = 6) -> list:
+     
+     """
+    滑动窗口截断对话历史
+    :param max_turn: 最多保留多少轮问答，1轮=用户1条+助手1条
+    :return: 截断后的最新历史列表
+    """
+     full_history = load_chat_history()
+     max_save_items = max_turn * 2
+     if len(full_history) > max_save_items:
+        return full_history[-max_save_items:]
+     return full_history
+
+# 更新导出列表
+__all__ = ["load_chat_history", "append_chat_message", "get_history_count", "slide_window_history"]
