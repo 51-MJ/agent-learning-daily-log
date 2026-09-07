@@ -223,7 +223,7 @@ __pycache__/
 *.pyc
 *.log
 chat_history.json
-# Chroma向量库缓存
-chroma_db/
+# Vector database cache
+vector_db/
 *.sqlite3
 *.bin
