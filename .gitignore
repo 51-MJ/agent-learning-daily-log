@@ -227,3 +227,4 @@ chat_history.json
 vector_db/
 *.sqlite3
 *.bin
+summary.json
