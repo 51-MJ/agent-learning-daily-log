@@ -44,5 +44,50 @@ def slide_window_history(max_turn: int = 6) -> list:
         return full_history[-max_save_items:]
      return full_history
 
-# 更新导出列表
-__all__ = ["load_chat_history", "append_chat_message", "get_history_count", "slide_window_history"]
+# ---------------------- 以下为Demo16新增：对话总结 ----------------------
+import json as _json
+
+SUMMARY_PATH = r"D:\develop\agent-learing\agent-learning-daily-log\summary.json"
+
+def load_conversation_summary() -> str:
+    """读取早期对话摘要，没有则返回空字符串"""
+    try:
+        with open(SUMMARY_PATH, "r", encoding="utf-8") as f:
+            data = _json.load(f)
+            return data.get("summary", "")
+    except:
+        return ""
+
+def save_conversation_summary(summary: str):
+    """保存对话摘要到文件"""
+    with open(SUMMARY_PATH, "w", encoding="utf-8") as f:
+        _json.dump({"summary": summary}, f, ensure_ascii=False, indent=2)
+
+def build_summary_prompt(history_list: list) -> str:
+    """
+    组装用于生成摘要的prompt
+    :param history_list: 需要被总结的早期对话列表
+    :return: 摘要生成prompt
+    """
+    history_str = ""
+    for item in history_list:
+        history_str += f"{item['role']}：{item['content']}\n"
+
+    return f"""
+请将以下对话历史总结成一段简洁的摘要，保留关键信息（人物、事件、重要结论、用户核心诉求），不要遗漏重要细节，控制在200字以内。
+
+【对话历史】
+{history_str}
+
+【摘要】
+"""
+
+__all__ = [
+    "load_chat_history",
+    "append_chat_message",
+    "get_history_count",
+    "slide_window_history",
+    "load_conversation_summary",
+    "save_conversation_summary",
+    "build_summary_prompt"
+]
