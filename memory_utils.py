@@ -13,19 +13,11 @@ def load_chat_history():
     return full_history
 
 def append_chat_message(role: str, content: str):
-    """
-    追加一条对话并立刻保存到json
-    :param role: "user" 或 "assistant"
-    :param content: 对话内容文本
-    """
     history = load_chat_history()
-    history.append({
-        "role": role,
-        "content": content
-    })
-    # 写回文件
+    history.append({"role": role, "content": content})
     with open(HISTORY_PATH, "w", encoding="utf-8") as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
+
 
 def get_history_count():
     """获取历史对话总条数，方便启动打印"""
