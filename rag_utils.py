@@ -1,6 +1,7 @@
 # rag_utils.py
 import chromadb
 from chromadb.utils import embedding_functions
+from chromadb.config import Settings
 
 # 初始化本地持久化向量库
 client = chromadb.PersistentClient(path="./vector_db")
@@ -81,12 +82,13 @@ def list_knowledge_sources() -> list:
     return sorted(list(sources))
 
 # 检索：返回topN高相似度片段，带来源信息
-def search_knowledge(query: str, top_n=3, source_filter: str = None) -> str:
+def search_knowledge(query: str, top_n=3, source_filter: str = None, score_threshold: float = 0.4) -> str:
     """
     检索知识库
     :param query: 用户提问
     :param top_n: 返回片段数量
     :param source_filter: 可选，只检索指定来源文件
+    :param score_threshold: 相似度阈值（cosine距离），大于此值认为不相关
     :return: 带来源信息的检索结果文本
     """
     if source_filter:
@@ -99,22 +101,88 @@ def search_knowledge(query: str, top_n=3, source_filter: str = None) -> str:
         res = collection.query(query_texts=[query], n_results=top_n)
 
     docs = res["documents"][0]
+    print(f"[调试] 检索距离: {res['distances'][0]}")
+
     metas = res["metadatas"][0]
+    distances = res["distances"][0]  # 每段的相似度距离
 
     if not docs:
         return "暂无相关知识库内容"
 
-    # 拼接时带上来源文件名
+    # 过滤掉相似度太低的片段（距离越大越不相关）
     result_lines = []
-    for i, (doc, meta) in enumerate(zip(docs, metas), 1):
+    for doc, meta, dist in zip(docs, metas, distances):
+        if dist > score_threshold:
+            continue  # 相似度不够，跳过
         src = meta.get("source", "未知") if meta else "未知"
         result_lines.append(f"[来源：{src}] {doc}")
+
+    # 如果所有片段都低于阈值，返回空
+    if not result_lines:
+        return "暂无相关知识库内容"
+
     return "\n".join(result_lines)
+
+
+HISTORY_VECTOR_DIR = r"D:\develop\agent-learing\agent-learning-daily-log\vector_db\chat_history"
+
+# 初始化历史对话向量库（和知识库分开，存在不同目录）
+_history_client = chromadb.PersistentClient(
+    path=HISTORY_VECTOR_DIR,
+    settings=Settings(anonymized_telemetry=False)
+)
+history_collection = _history_client.get_or_create_collection(
+    name="chat_history",
+    metadata={"hnsw:space": "cosine"}
+)
+
+def save_turn_to_history(user_msg: str, assistant_msg: str):
+    """
+    把一轮对话存进历史对话向量库
+    :param user_msg: 用户问题
+    :param assistant_msg: 助手回答
+    """
+    # 把用户问题和助手回答合并成一段文本，方便检索
+    turn_text = f"用户问：{user_msg}\n助手答：{assistant_msg}"
+    # 用当前时间戳做唯一ID
+    import time
+    doc_id = str(int(time.time() * 1000))
+
+    history_collection.add(
+        documents=[turn_text],
+        ids=[doc_id],
+        metadatas=[{"user": user_msg, "assistant": assistant_msg}]
+    )
+
+def search_history(query: str, top_n: int = 3) -> str:
+    """
+    从历史对话向量库检索和当前问题最相关的历史对话
+    :param query: 用户当前提问
+    :param top_n: 返回最相关的N条
+    :return: 拼接好的历史对话文本，没有则返回空字符串
+    """
+    res = history_collection.query(
+        query_texts=[query],
+        n_results=top_n
+    )
+    docs = res["documents"][0]
+    if not docs:
+        return ""
+
+    # 拼接成"历史对话参考"格式
+    result_lines = ["【相关历史对话参考】"]
+    for doc in docs:
+        result_lines.append(doc)
+        result_lines.append("---")  # 分隔线
+    return "\n".join(result_lines)
+
 
 # 导出对外接口
 __all__ = [
     "add_knowledge",
     "search_knowledge",
     "delete_knowledge_by_source",
-    "list_knowledge_sources"
+    "list_knowledge_sources",
+    "save_turn_to_history",
+    "search_history"
 ]
