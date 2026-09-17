@@ -1,7 +1,9 @@
 # tool_router.py
 # 功能：统一工具注册、关键词匹配、批量调用路由模块（仅处理时间工具）
 from datetime import datetime
-from duckduckgo_search import DDGS
+from ddgs import DDGS
+
+
 
 # ---------------------- 定义所有时间工具函数 ----------------------
 def get_now_time() -> str:
